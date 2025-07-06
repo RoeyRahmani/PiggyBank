@@ -4,7 +4,7 @@ using UnityEngine;
 public class GameStarter : MonoBehaviour
 {
     /// <summary>
-    /// יש םונקציה שנקראת תחת הקלאס TimeAPI Servie והפונקציה נראת GET CUrrent Time
+    /// יש פונקציה שנקראת תחת הקלאס TimeAPI Servie והפונקציה נראת GET CUrrent Time
     /// היא תחזיר לך זמן בפורמט UTC ויהיא אסינכרוניט
     /// 
     /// Add save and load, 
