@@ -2,41 +2,61 @@ using UnityEngine;
 
 public class PiggyBankRewardManager : MonoBehaviour
 {
-    public PiggyBankManager piggyBank;
-    public int MultiplyFactor = 2; // RV button multiplier
+    [Header("References")]
+    [SerializeField] private PiggyBankManager piggyBank;
 
-    private bool eventExpired = false;
+    [Header("Reward Settings")]
+    [SerializeField] private int multiplyFactor = 2; // Multiplier for RV
+
+    private bool canPartialClaim = false;
+
+    private void OnEnable()
+    {
+        if (piggyBank != null)
+            piggyBank.OnEventExpired += EnablePartialClaim;
+    }
+
+    private void OnDisable()
+    {
+        if (piggyBank != null)
+            piggyBank.OnEventExpired -= EnablePartialClaim;
+    }
 
     public void ClaimReward(bool watchedRV)
     {
-        if (!piggyBank.IsEventActive())
+        int reward = 0;
+
+        if (piggyBank.IsEventActive)
         {
-            // Fallback claim after expiry
-            PartialClaimWithRV();
+            reward = piggyBank.currentCoins;
+            if (watchedRV)
+                reward *= multiplyFactor;
+
+            piggyBank.ResetPiggyBank();
+        }
+        else if (canPartialClaim)
+        {
+            reward = Mathf.FloorToInt(piggyBank.currentCoins * 0.5f);
+            canPartialClaim = false;
+        }
+        else
+        {
+            Debug.Log("Event is not active and partial reward has already been claimed.");
             return;
         }
 
-        int reward = piggyBank.CurrentCoins;
-        if (watchedRV)
-            reward *= MultiplyFactor;
-
         UpdatePlayerCoins(reward);
-        piggyBank.ResetPiggyBank();
     }
 
-    private void PartialClaimWithRV()
+    private void EnablePartialClaim()
     {
-        if (!eventExpired)
-        {
-            int partialReward = Mathf.FloorToInt(piggyBank.CurrentCoins * 0.5f); // 50% Reward
-            UpdatePlayerCoins(partialReward);
-            eventExpired = true;
-        }
+        canPartialClaim = true;
+        Debug.Log("Event expired: partial reward claim enabled.");
     }
 
     private void UpdatePlayerCoins(int amount)
     {
-        //PlayerData.TotalCoins += amount;
+        // e.g. PlayerData.Instance.AddCoins(amount);
         Debug.Log($"Player received {amount} coins.");
     }
 }

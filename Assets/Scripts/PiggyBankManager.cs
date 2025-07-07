@@ -1,161 +1,84 @@
 using System;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PiggyBankManager : MonoBehaviour
 {
-    /// <summary>
-    /// 
-    /// check if we can delete isEventActive and change it to Events
-    /// 
-    /// </summary>
+    [Header("Core Values")]
+    public int MaxCapacity { get; private set; }
+    public int currentCoins { get; private set; }
+    public float FillRate { get; private set; }
+    public float EventDuration => eventTimer;
+    private float eventTimer;
 
-    [Header("Screens")]
-    public GameObject piggyBankNotFullScreen;
-    public GameObject piggyBankFullScreen;
-
-    public GameObject piggyBankScreen;
-    public GameObject mainMenuScreen;
-
-    [Header("Texts")]
-    public TextMeshProUGUI coinsInPiggyBankText;
-    public TextMeshProUGUI totalPlayerCoinsText;
-    public TextMeshProUGUI eventTimeText;
-
-    [Header("Values")]
-    int MaxCapacity; // **get this from datebase
-    public int CurrentCoins { get; private set; } // **get this from datebase
     private int totalPlayerCurrency;
-    public float FillRate;
-    public bool IsFull => CurrentCoins >= MaxCapacity; // change to bool void. and check if changed
-    private float eventTimer; // **get this from datebase
-    public bool isEventActive = false;
+    public bool IsFull => currentCoins >= MaxCapacity;
+    public bool IsEventActive => eventTimer > 0f;
 
+    // Events
+    public event Action OnPiggyBankStarted;
+    public event Action OnPiggyBankStopped;
     public event Action OnPiggyBankFull;
     public event Action OnPiggyBankUnlocked;
     public event Action OnEventExpired;
+    public event Action<int, int> OnCoinsUpdated; // (currentCoins, totalCurrency)
+    public event Action<float> OnTimerUpdated;    // (eventTimer remaining)
 
-    [Header("Progress Bar")]
-    public Image coinProgressFillImage;
-
-    private void Start()
+    private void Update()
     {
-        piggyBankScreen.SetActive(false);
-    }
-
-    void Update()
-    {
-        if (!isEventActive) return;
-        UpdateUI();
+        if (!IsEventActive) return;
 
         eventTimer -= Time.deltaTime;
-        if (eventTimer <= 0)
+        OnTimerUpdated?.Invoke(eventTimer);
+
+        if (eventTimer <= 0f)
         {
-            isEventActive = false;
+            eventTimer = 0f;
             OnEventExpired?.Invoke();
-            ResetPiggyBank();
-            
-        } 
-    }
-    private void UpdateUI()
-    {
-        if (!isEventActive)
-        {
-            piggyBankFullScreen.SetActive(false);
-            piggyBankNotFullScreen.SetActive(false);
-            totalPlayerCoinsText.text = "";
-            coinsInPiggyBankText.text = "";
-            eventTimeText.text = "";
-
-            if (coinProgressFillImage != null)
-                coinProgressFillImage.fillAmount = 0;
-
-            return;
-        }
-
-        if (IsFull)
-        {
-            coinsInPiggyBankText.text = CurrentCoins.ToString();
-            piggyBankFullScreen.SetActive(true);
-            piggyBankNotFullScreen.SetActive(false);
-        }
-        else
-        {
-            coinsInPiggyBankText.text = CurrentCoins.ToString() + " / " + MaxCapacity.ToString();
-            piggyBankFullScreen.SetActive(false);
-            piggyBankNotFullScreen.SetActive(true);
-        }
-
-        eventTimeText.text = "Event ends in: " + Mathf.CeilToInt(eventTimer).ToString() + "s";
-        totalPlayerCoinsText.text = totalPlayerCurrency.ToString();
-
-        if (coinProgressFillImage != null)
-        {
-            coinProgressFillImage.fillAmount = (float)CurrentCoins / MaxCapacity;
+            StopPiggyBankEvent();
         }
     }
 
     public void InitializePiggyBank(int maxCapacity, int startingCoins, float fillRate, float timerDuration, int totalCurrency)
     {
-
         MaxCapacity = maxCapacity;
-        CurrentCoins = startingCoins;
+        currentCoins = startingCoins;
         FillRate = fillRate;
         eventTimer = timerDuration;
         totalPlayerCurrency = totalCurrency;
 
-        isEventActive = true;
-        Debug.Log("event has started");
-        UpdateUI();
+        OnPiggyBankStarted?.Invoke();
+        OnCoinsUpdated?.Invoke(currentCoins, totalPlayerCurrency);
+        OnTimerUpdated?.Invoke(eventTimer);
+
+        Debug.Log("Piggy Bank Event Started");
     }
+
     public void StopPiggyBankEvent()
     {
-        isEventActive = false;
         ResetPiggyBank();
-        
-        piggyBankScreen.SetActive(false);
-        coinsInPiggyBankText.text = "";
-        eventTimeText.text = "";
-        totalPlayerCoinsText.text = "";
-
-
-        if (coinProgressFillImage != null)
-            coinProgressFillImage.fillAmount = 0;
-
-        Debug.Log("PiggyBankEvent Has Stopped!");
+        OnPiggyBankStopped?.Invoke();
+        Debug.Log("Piggy Bank Event Stopped");
     }
 
     public void AddCoinsFromGold(int goldCollected)
     {
         totalPlayerCurrency += goldCollected;
 
-        if (!isEventActive || IsFull)
+        if (!IsEventActive || IsFull)
         {
-            UpdateUI(); // So the currency still updates even if piggy is full or event is off
+            OnCoinsUpdated?.Invoke(currentCoins, totalPlayerCurrency);
             return;
         }
 
         int coinsToAdd = Mathf.FloorToInt(goldCollected * FillRate);
-        CurrentCoins = Mathf.Min(CurrentCoins + coinsToAdd, MaxCapacity);
+        currentCoins = Mathf.Min(currentCoins + coinsToAdd, MaxCapacity);
 
         if (IsFull)
         {
             OnPiggyBankFull?.Invoke();
         }
 
-        UpdateUI();
-    }
-    public void ShowPiggyBankScreen()
-    {
-        piggyBankScreen.SetActive(true);
-        mainMenuScreen.SetActive(false);
-    }
-
-    public void BackToMainMenuBTN()
-    {
-        mainMenuScreen.SetActive(true);
-        piggyBankScreen.SetActive(false);
+        OnCoinsUpdated?.Invoke(currentCoins, totalPlayerCurrency);
     }
 
     public void UnlockPiggyBank()
@@ -168,19 +91,11 @@ public class PiggyBankManager : MonoBehaviour
 
     public void ResetPiggyBank()
     {
-        CurrentCoins = 0;
-        eventTimer = 0;
+        currentCoins = 0;
+        eventTimer = 0f;
     }
 
-    public void AddCoins()
-    {
-        AddCoinsFromGold(1000);
-    }
-    public bool IsFulls()
-    {
-        return false;
-    }
-    public bool IsEventActive() => isEventActive;
-
+    // Optional Accessors
     public float GetRemainingTime() => eventTimer;
+    public int GetTotalPlayerCurrency() => totalPlayerCurrency;
 }
