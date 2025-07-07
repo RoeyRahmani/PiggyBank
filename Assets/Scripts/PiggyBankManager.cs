@@ -14,12 +14,13 @@ public class PiggyBankManager : MonoBehaviour
     [Header("Screens")]
     public GameObject piggyBankNotFullScreen;
     public GameObject piggyBankFullScreen;
-    public GameObject piggyBankScreen;
 
-    //public Slider coinProgressBar;
+    public GameObject piggyBankScreen;
+    public GameObject mainMenuScreen;
+
     [Header("Texts")]
-    public TextMeshProUGUI CurrentCoinsText;
-    public TextMeshProUGUI totalPlayerCurrencyText;
+    public TextMeshProUGUI coinsInPiggyBankText;
+    public TextMeshProUGUI totalPlayerCoinsText;
     public TextMeshProUGUI eventTimeText;
 
     [Header("Values")]
@@ -37,6 +38,11 @@ public class PiggyBankManager : MonoBehaviour
 
     [Header("Progress Bar")]
     public Image coinProgressFillImage;
+
+    private void Start()
+    {
+        piggyBankScreen.SetActive(false);
+    }
 
     void Update()
     {
@@ -58,8 +64,8 @@ public class PiggyBankManager : MonoBehaviour
         {
             piggyBankFullScreen.SetActive(false);
             piggyBankNotFullScreen.SetActive(false);
-            totalPlayerCurrencyText.text = "";
-            CurrentCoinsText.text = "";
+            totalPlayerCoinsText.text = "";
+            coinsInPiggyBankText.text = "";
             eventTimeText.text = "";
 
             if (coinProgressFillImage != null)
@@ -70,19 +76,19 @@ public class PiggyBankManager : MonoBehaviour
 
         if (IsFull)
         {
-            CurrentCoinsText.text = CurrentCoins.ToString();
+            coinsInPiggyBankText.text = CurrentCoins.ToString();
             piggyBankFullScreen.SetActive(true);
             piggyBankNotFullScreen.SetActive(false);
         }
         else
         {
-            CurrentCoinsText.text = CurrentCoins.ToString() + " / " + MaxCapacity.ToString();
+            coinsInPiggyBankText.text = CurrentCoins.ToString() + " / " + MaxCapacity.ToString();
             piggyBankFullScreen.SetActive(false);
             piggyBankNotFullScreen.SetActive(true);
         }
 
         eventTimeText.text = "Event ends in: " + Mathf.CeilToInt(eventTimer).ToString() + "s";
-        totalPlayerCurrencyText.text = totalPlayerCurrency.ToString();
+        totalPlayerCoinsText.text = totalPlayerCurrency.ToString();
 
         if (coinProgressFillImage != null)
         {
@@ -109,9 +115,9 @@ public class PiggyBankManager : MonoBehaviour
         ResetPiggyBank();
         
         piggyBankScreen.SetActive(false);
-        CurrentCoinsText.text = "";
+        coinsInPiggyBankText.text = "";
         eventTimeText.text = "";
-        totalPlayerCurrencyText.text = "";
+        totalPlayerCoinsText.text = "";
 
 
         if (coinProgressFillImage != null)
@@ -139,6 +145,17 @@ public class PiggyBankManager : MonoBehaviour
         }
 
         UpdateUI();
+    }
+    public void ShowPiggyBankScreen()
+    {
+        piggyBankScreen.SetActive(true);
+        mainMenuScreen.SetActive(false);
+    }
+
+    public void BackToMainMenuBTN()
+    {
+        mainMenuScreen.SetActive(true);
+        piggyBankScreen.SetActive(false);
     }
 
     public void UnlockPiggyBank()
