@@ -5,9 +5,7 @@ public class GameStarter : MonoBehaviour
 {
     public PiggyBankManager piggyBankManager;
     public GameObject mainMenuScreen;
-    public GameObject piggyBankScreen; // Add this reference
-
-    private bool isEventRunning = false;
+    public GameObject piggyBankScreen;
 
     private void Start()
     {
@@ -18,20 +16,18 @@ public class GameStarter : MonoBehaviour
 
     public void TogglePiggyBankEventFromButton()
     {
-        if (!isEventRunning)
+        if (!piggyBankManager.IsEventActive)
         {
             int max = 1000;
             int current = 0;
             float fill = 0.5f;
             float timer = 300f;
-            int totalCurreny = 0;
+            int totalCurrency = 0;
 
-            // Show only main menu when event starts
             mainMenuScreen.SetActive(true);
             piggyBankScreen.SetActive(false);
 
-            piggyBankManager.InitializePiggyBank(max, current, fill, timer, totalCurreny);
-            isEventRunning = true;
+            piggyBankManager.InitializePiggyBank(max, current, fill, timer, totalCurrency);
 
             Debug.Log("PiggyBankEvent Has Started!");
         }
@@ -41,31 +37,8 @@ public class GameStarter : MonoBehaviour
             piggyBankScreen.SetActive(false);
 
             piggyBankManager.StopPiggyBankEvent();
-            isEventRunning = false;
+
+            Debug.Log("PiggyBankEvent Has Stopped!");
         }
-    }
-}
-public class GameManager : MonoBehaviour
-{
-    public GameObject mainMenuScreenUI;
-    public GameObject piggyBankScreenUI;
-
-    void Start()
-    {
-        // Both screens off at start
-        mainMenuScreenUI.SetActive(false);
-        piggyBankScreenUI.SetActive(false);
-    }
-
-    public void ShowPiggyBankScreen()
-    {
-        piggyBankScreenUI.SetActive(true);
-        mainMenuScreenUI.SetActive(false);
-    }
-
-    public void BackToMainMenuBTN()
-    {
-        mainMenuScreenUI.SetActive(true);
-        piggyBankScreenUI.SetActive(false);
     }
 }
